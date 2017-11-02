@@ -77,7 +77,7 @@ func getMemoryResources(config containertypes.Resources) *specs.LinuxMemory {
 
         if config.Memory == 0 {
                 memorylimits := int64(MemoryLimits)
-		memory.Limit = memorylimits
+		memory.Limit = &memorylimits
         } else if config.Memory > 0 {
                 memory.Limit = &config.Memory
         }
