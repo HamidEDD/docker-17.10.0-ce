@@ -64,8 +64,17 @@ const (
 	cgroupFsDriver      = "cgroupfs"
 	cgroupSystemdDriver = "systemd"
 
-        //MemoryLimits by Default : 64M
-        MemoryLimits = 67108864
+        // Set MemoryLimits by Default to 64M
+        DefaultMemoryLimits = 67108864
+
+	// Set Default CPUShares Limit to 32
+	DefaultCPUShares = 32
+
+	// Set Default CPUPeriod limit to : 40ms
+        DefaultCPUPeriod = 40000
+
+	// Set Default CPUQuota limit to : 10ms
+	DefaultCPUQuota = 10000 
 )
 
 type containerGetter interface {
@@ -74,19 +83,23 @@ type containerGetter interface {
 
 func getMemoryResources(config containertypes.Resources) *specs.LinuxMemory {
 	memory := specs.LinuxMemory{}
-
+        memorylimits := int64(DefaultMemoryLimits)
+        
         if config.Memory == 0 {
-                memorylimits := int64(MemoryLimits)
 		memory.Limit = &memorylimits
         } else if config.Memory > 0 {
                 memory.Limit = &config.Memory
         }
-
-	if config.MemoryReservation > 0 {
+        
+        if config.MemoryReservation == 0 {
+               memory.Reservation = &memorylimits
+        } else if config.MemoryReservation > 0 {
 		memory.Reservation = &config.MemoryReservation
 	}
 
-	if config.MemorySwap > 0 {
+	if config.MemorySwap == 0 {
+                memory.Swap = &memorylimits
+        } else if config.MemorySwap > 0 {
 		memory.Swap = &config.MemorySwap
 	}
 
@@ -104,11 +117,16 @@ func getMemoryResources(config containertypes.Resources) *specs.LinuxMemory {
 
 func getCPUResources(config containertypes.Resources) (*specs.LinuxCPU, error) {
 	cpu := specs.LinuxCPU{}
-
+        cpushares := uint64(DefaultCPUShares)
+        cpuperiod := uint64(DefaultCPUPeriod)
+        cpuquota := uint64(DefaultCPUQuota)
+   
 	if config.CPUShares < 0 {
 		return nil, fmt.Errorf("shares: invalid argument")
 	}
-	if config.CPUShares >= 0 {
+	if config.CPUShares == 0 {
+                cpu.Shares = &cpushares
+        } else if config.CPUShares >= 0 {
 		shares := uint64(config.CPUShares)
 		cpu.Shares = &shares
 	}
@@ -129,12 +147,16 @@ func getCPUResources(config containertypes.Resources) (*specs.LinuxCPU, error) {
 		cpu.Quota = &quota
 	}
 
-	if config.CPUPeriod != 0 {
+	if config CPUPeriod == 0 {
+                cpu.Period = &cpuperiod
+        } else if config.CPUPeriod != 0 {
 		period := uint64(config.CPUPeriod)
 		cpu.Period = &period
 	}
 
-	if config.CPUQuota != 0 {
+        if config.CPUQuota == 0 {
+                cpu.Quota = &cpuquota
+        } else if config.CPUQuota != 0 {
 		q := config.CPUQuota
 		cpu.Quota = &q
 	}
