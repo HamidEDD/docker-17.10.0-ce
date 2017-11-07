@@ -147,7 +147,7 @@ func getCPUResources(config containertypes.Resources) (*specs.LinuxCPU, error) {
 		cpu.Quota = &quota
 	}
 
-	if config CPUPeriod == 0 {
+	if config.CPUPeriod == 0 {
                 cpu.Period = &cpuperiod
         } else if config.CPUPeriod != 0 {
 		period := uint64(config.CPUPeriod)
